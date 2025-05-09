@@ -23,11 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Icons } from '@/components/icons'
+import { Iconsdata } from '@/components/icons'
 import { useToast } from '@/components/ui/use-toast'
 import { fetcher } from '@/lib/utils'
 
-export function AddServiceDialog({ vehicleId }) {
+export const AddServiceDialog = ({ vehicleId }) =>{
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -84,7 +84,7 @@ export function AddServiceDialog({ vehicleId }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Icons.plus className="mr-2 h-4 w-4" />
+          <Iconsdata.plus className="mr-2 h-4 w-4" />
           Add Service Record
         </Button>
       </DialogTrigger>
@@ -177,7 +177,7 @@ export function AddServiceDialog({ vehicleId }) {
             </Button>
             <Button type="submit" disabled={mutation.isLoading}>
               {mutation.isLoading && (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                <Iconsdata.spinner className="mr-2 h-4 w-4 animate-spin" />
               )}
               Add Service
             </Button>

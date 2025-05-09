@@ -1,9 +1,10 @@
+//src/components/layouts/header.js
 'use client'
 
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
-import { Icons } from '@/components/icons'
+import { Iconsdata } from '@/components/icons'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,15 +35,15 @@ export function Header({ user }) {
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             {theme === 'dark' ? (
-              <Icons.sun className="h-5 w-5" />
+              <Iconsdata.sun className="h-5 w-5" />
             ) : (
-              <Icons.moon className="h-5 w-5" />
+              <Iconsdata.moon className="h-5 w-5" />
             )}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Icons.user className="h-5 w-5" />
+                <Iconsdata.user className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

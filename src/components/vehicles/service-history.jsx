@@ -32,7 +32,7 @@ const getStatusColor = (status: string) => {
 export function ServiceHistory({ vehicleId }: { vehicleId: string }) {
   const { data: vehicle, isLoading } = useQuery({
     queryKey: ["vehicle", vehicleId],
-    queryFn: () => fetcher(`/api/v1/vehicles/${vehicleId}`),
+    queryFn: () => fetcher(`vehicles/${vehicleId}`),
   })
 
   if (isLoading) {

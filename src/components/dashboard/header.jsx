@@ -14,10 +14,10 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { useState } from "react"
 
 export function DashboardHeader() {
-  const [date, setDate] = useState<Date>()
+  const [date, setDate] = useState()
   const { data: user } = useQuery({
     queryKey: ["user-profile"],
-    queryFn: () => fetcher("/api/v1/auth/profile"),
+    queryFn: () => fetcher("auth/profile"),
   })
 
   return (

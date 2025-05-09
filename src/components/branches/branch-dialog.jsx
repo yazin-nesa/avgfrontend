@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
@@ -38,7 +38,8 @@ export function BranchDialog({ branchId, children }) {
     enabled: !!branchId && open,
   })
 
-  const branch = branchData?.data // FIX: get actual branch object
+  // Extract branch data correctly
+  const branch = branchData?.data || branchData
 
   // Fetch manager options
   const { data: managerData } = useQuery({
@@ -47,7 +48,9 @@ export function BranchDialog({ branchId, children }) {
     enabled: open,
   })
 
-  const managers = managerData?.data || managerData?.users || [] // FIX: safely extract array
+  // Extract managers array correctly
+  const managers = managerData?.data || managerData?.users || []
+  console.log("managers data :", managers)
 
   const {
     register,
@@ -58,12 +61,39 @@ export function BranchDialog({ branchId, children }) {
   } = useForm({
     defaultValues: {
       name: "",
-      city: "",
-      address: "",
-      managerId: "",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: ""
+      },
+      phone: "",
+      email: "",
+      manager: "",
       status: "active",
+      capacity: {
+        vehicles: 0,
+        staff: 0
+      }
     },
   })
+
+  // Set form values when branch data is loaded for editing
+  useEffect(() => {
+    if (branch && branchId) {
+      setValue("name", branch.name || "");
+      setValue("address.street", branch.address?.street || "");
+      setValue("address.city", branch.address?.city || "");
+      setValue("address.state", branch.address?.state || "");
+      setValue("address.zipCode", branch.address?.zipCode || "");
+      setValue("phone", branch.phone || "");
+      setValue("email", branch.email || "");
+      setValue("manager", branch.manager?._id || "");
+      setValue("status", branch.status || "active");
+      setValue("capacity.vehicles", branch.capacity?.vehicles || 0);
+      setValue("capacity.staff", branch.capacity?.staff || 0);
+    }
+  }, [branch, branchId, setValue]);
 
   // Create or update branch
   const mutation = useMutation({
@@ -93,7 +123,7 @@ export function BranchDialog({ branchId, children }) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to save branch",
       })
     },
   })
@@ -105,7 +135,7 @@ export function BranchDialog({ branchId, children }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{branchId ? "Edit" : "Add"} Branch</DialogTitle>
           <DialogDescription>
@@ -126,7 +156,6 @@ export function BranchDialog({ branchId, children }) {
               <Label htmlFor="name">Branch Name</Label>
               <Input
                 id="name"
-                defaultValue={branch?.name}
                 {...register("name", { required: "Branch name is required" })}
               />
               {errors.name && (
@@ -134,50 +163,142 @@ export function BranchDialog({ branchId, children }) {
               )}
             </div>
 
-            {/* City */}
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                defaultValue={branch?.city}
-                {...register("city", { required: "City is required" })}
-              />
-              {errors.city && (
-                <p className="text-sm text-red-500">{errors.city.message}</p>
-              )}
-            </div>
-
             {/* Address */}
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                defaultValue={branch?.address}
-                {...register("address", { required: "Address is required" })}
-              />
-              {errors.address && (
-                <p className="text-sm text-red-500">{errors.address.message}</p>
-              )}
+              <Label>Address</Label>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <Label htmlFor="street" className="text-xs">Street</Label>
+                  <Input
+                    id="street"
+                    {...register("address.street", { required: "Street is required" })}
+                  />
+                  {errors.address?.street && (
+                    <p className="text-sm text-red-500">{errors.address.street.message}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <Label htmlFor="city" className="text-xs">City</Label>
+                  <Input
+                    id="city"
+                    {...register("address.city", { required: "City is required" })}
+                  />
+                  {errors.address?.city && (
+                    <p className="text-sm text-red-500">{errors.address.city.message}</p>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label htmlFor="state" className="text-xs">State</Label>
+                    <Input
+                      id="state"
+                      {...register("address.state", { required: "State is required" })}
+                    />
+                    {errors.address?.state && (
+                      <p className="text-sm text-red-500">{errors.address.state.message}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="zipCode" className="text-xs">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      {...register("address.zipCode", { required: "ZIP code is required" })}
+                    />
+                    {errors.address?.zipCode && (
+                      <p className="text-sm text-red-500">{errors.address.zipCode.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  {...register("phone", { required: "Phone is required" })}
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-500">{errors.phone.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email", { 
+                    required: "Email is required",
+                    pattern: {
+                      value: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+                      message: "Please enter a valid email"
+                    }
+                  })}
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Capacity */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="vehicles">Vehicle Capacity</Label>
+                <Input
+                  id="vehicles"
+                  type="number"
+                  {...register("capacity.vehicles", { 
+                    required: "Vehicle capacity is required",
+                    valueAsNumber: true
+                  })}
+                />
+                {errors.capacity?.vehicles && (
+                  <p className="text-sm text-red-500">{errors.capacity.vehicles.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="staff">Staff Capacity</Label>
+                <Input
+                  id="staff"
+                  type="number"
+                  {...register("capacity.staff", { 
+                    required: "Staff capacity is required",
+                    valueAsNumber: true
+                  })}
+                />
+                {errors.capacity?.staff && (
+                  <p className="text-sm text-red-500">{errors.capacity.staff.message}</p>
+                )}
+              </div>
             </div>
 
             {/* Manager */}
             <div className="space-y-2">
-              <Label htmlFor="managerId">Branch Manager</Label>
+              <Label htmlFor="manager">Branch Manager</Label>
               <Select
-                onValueChange={(value) => setValue("managerId", value)}
-                defaultValue={branch?.manager?._id}
+                onValueChange={(value) => setValue("manager", value)}
+                defaultValue={branch?.manager?._id || undefined}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select manager" />
                 </SelectTrigger>
                 <SelectContent>
-                  {managers?.map((manager) => (
+                  {managers.map((manager) => (
                     <SelectItem key={manager._id} value={manager._id}>
                       {manager.firstName} {manager.lastName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">Leave empty to set as unassigned</p>
             </div>
 
             {/* Status */}
@@ -193,6 +314,7 @@ export function BranchDialog({ branchId, children }) {
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>

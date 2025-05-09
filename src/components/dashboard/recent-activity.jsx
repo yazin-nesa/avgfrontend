@@ -7,12 +7,12 @@ import { fetcher } from "@/lib/utils"
 export function RecentActivity() {
   const { data: activities } = useQuery({
     queryKey: ["recent-activities"],
-    queryFn: () => fetcher("/api/v1/dashboard/activities"),
+    queryFn: () => fetcher("dashboard/activities"),
   })
 
   return (
     <div className="space-y-8">
-      {activities?.map((activity: any) => (
+      {activities?.map((activity) => (
         <div className="flex items-center" key={activity.id}>
           <Avatar className="h-9 w-9">
             <AvatarImage src={activity.user.avatar} alt="Avatar" />

@@ -17,7 +17,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
-import { Icons } from '@/components/icons'
+import { Iconsdata } from '@/components/icons'
 import { fetcher, formatDate, formatCurrency } from '@/lib/utils'
 import { AddServiceDialog } from './add-service-dialog'
 
@@ -37,7 +37,7 @@ export function VehicleDetailsDialog({ vehicleId }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Icons.eye className="h-4 w-4" />
+          <Iconsdata.eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
@@ -49,7 +49,7 @@ export function VehicleDetailsDialog({ vehicleId }) {
         </DialogHeader>
         {isLoading ? (
           <div className="flex items-center justify-center p-8">
-            <Icons.spinner className="h-8 w-8 animate-spin" />
+            <Iconsdata.spinner className="h-8 w-8 animate-spin" />
           </div>
         ) : (
           <Tabs defaultValue="details">

@@ -23,16 +23,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { fetcher } from "@/lib/utils"
+import { apiClient } from "@/lib/api" // Import the apiClient instead of fetcher
 
 export function AddStaffDialog({ children }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const { data: branches } = useQuery({
+  // Use apiClient for fetching branches
+  const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ["branches"],
-    queryFn: () => fetcher("branches"),
+    queryFn: () => apiClient.get("branches"),
   })
 
   const {
@@ -40,19 +41,23 @@ export function AddStaffDialog({ children }) {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting },
+    watch,
   } = useForm({
     defaultValues: {
       role: "staff",
+      status: "active",
     },
   })
 
+  // Watch the branch value to ensure it's being set
+  const selectedBranch = watch("branch")
+
   const mutation = useMutation({
-    mutationFn: (data) =>
-      fetcher("users", {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data) => {
+      // Use apiClient.post instead of fetcher
+      return apiClient.post("users", data)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["staff"])
       toast({
@@ -63,16 +68,24 @@ export function AddStaffDialog({ children }) {
       reset()
     },
     onError: (error) => {
+      console.error("Error adding staff:", error)
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to add staff member",
       })
     },
   })
 
   const onSubmit = (data) => {
-    mutation.mutate(data)
+    // Add additional fields required by the backend
+    const enhancedData = {
+      ...data,
+      status: "active", // Set default status
+    }
+    
+    console.log("Submitting form data:", enhancedData) // Debug log
+    mutation.mutate(enhancedData)
   }
 
   return (
@@ -95,7 +108,7 @@ export function AddStaffDialog({ children }) {
               />
               {errors.firstName && (
                 <p className="text-sm text-red-500">
-                  {errors.firstName.message }
+                  {errors.firstName.message}
                 </p>
               )}
             </div>
@@ -107,7 +120,7 @@ export function AddStaffDialog({ children }) {
               />
               {errors.lastName && (
                 <p className="text-sm text-red-500">
-                  {errors.lastName.message }
+                  {errors.lastName.message}
                 </p>
               )}
             </div>
@@ -127,12 +140,32 @@ export function AddStaffDialog({ children }) {
             />
             {errors.email && (
               <p className="text-sm text-red-500">
-                {errors.email.message }
+                {errors.email.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              {...register("password", {
+                required: "Password is required",
+                minLength: {
+                  value: 6,
+                  message: "Password must be at least 6 characters",
+                },
+              })}
+            />
+            {errors.password && (
+              <p className="text-sm text-red-500">
+                {errors.password.message}
               </p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
+            {/* Register the role select properly */}
             <Select
               onValueChange={(value) => setValue("role", value)}
               defaultValue="staff"
@@ -150,18 +183,44 @@ export function AddStaffDialog({ children }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            <Select onValueChange={(value) => setValue("branch", value)}>
+            {/* Register the branch field properly */}
+            <Select 
+              onValueChange={(value) => setValue("branch", value)}
+              value={selectedBranch}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select branch" />
               </SelectTrigger>
               <SelectContent>
-              {branches?.data?.map((branch) => (
-                  <SelectItem key={branch._id} value={branch._id}>
-                    {branch.name}
+                {branchesLoading ? (
+                  <SelectItem value="loading" disabled>Loading branches...</SelectItem>
+                ) : branches?.data?.length > 0 ? (
+                  branches.data.map((branch) => (
+                    <SelectItem key={branch._id} value={branch._id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-branches" disabled>
+                    No branches available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
+            {!selectedBranch && (
+              <p className="text-sm text-amber-500">
+                Please select a branch
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone (Optional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              {...register("phone")}
+              placeholder="(123) 456-7890"
+            />
           </div>
           <DialogFooter>
             <Button
@@ -171,8 +230,8 @@ export function AddStaffDialog({ children }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isLoading}>
-              {mutation.isLoading && (
+            <Button type="submit" disabled={mutation.isLoading || isSubmitting}>
+              {(mutation.isLoading || isSubmitting) && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               )}
               Add Staff
@@ -182,4 +241,4 @@ export function AddStaffDialog({ children }) {
       </DialogContent>
     </Dialog>
   )
-} 
+}

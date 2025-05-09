@@ -39,7 +39,7 @@ export function ServiceDialog({
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
     queryKey: ["vehicle", vehicleId],
-    queryFn: () => fetcher(`/api/v1/vehicles/${vehicleId}`),
+    queryFn: () => fetcher(`vehicles/${vehicleId}`),
     enabled: open,
   })
 
@@ -66,7 +66,7 @@ export function ServiceDialog({
 
   const mutation = useMutation({
     mutationFn: (data) =>
-      fetcher(`/api/v1/vehicles/${vehicleId}/services`, {
+      fetcher(`vehicles/${vehicleId}/services`, {
         method: "POST",
         body: JSON.stringify(data),
       }),

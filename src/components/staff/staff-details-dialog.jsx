@@ -37,13 +37,13 @@ export function StaffDetailsDialog({
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["user", userId],
-    queryFn: () => fetcher(`/api/v1/users/${userId}`),
+    queryFn: () => fetcher(`users/${userId}`),
     enabled: open,
   })
 
   const { data: branches } = useQuery({
     queryKey: ["branches"],
-    queryFn: () => fetcher("/api/v1/branches"),
+    queryFn: () => fetcher("branches"),
     enabled: open,
   })
 
@@ -56,7 +56,7 @@ export function StaffDetailsDialog({
 
   const mutation = useMutation({
     mutationFn: (data) =>
-      fetcher(`/api/v1/users/${userId}`, {
+      fetcher(`users/${userId}`, {
         method: "PUT",
         body: JSON.stringify(data),
       }),
@@ -178,11 +178,18 @@ export function StaffDetailsDialog({
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
                 <SelectContent>
-                  {branches?.map((branch) => (
+                {branches?.data?.length > 0 ? (
+                  branches?.data?.map((branch) => (
                     <SelectItem key={branch._id} value={branch._id}>
                       {branch.name}
                     </SelectItem>
-                  ))}
+                  ))
+                ):
+                (
+                  <SelectItem value="no-branches" disabled>
+                    No branches available
+                  </SelectItem>
+                )}
                 </SelectContent>
               </Select>
             </div>
@@ -232,4 +239,4 @@ export function StaffDetailsDialog({
       </DialogContent>
     </Dialog>
   )
-} 
+}

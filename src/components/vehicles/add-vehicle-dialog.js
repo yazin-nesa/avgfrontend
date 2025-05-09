@@ -22,11 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Icons } from '@/components/icons'
+import { Iconsdata } from '@/components/icons'
 import { useToast } from '@/components/ui/use-toast'
 import { fetcher } from '@/lib/utils'
 
-export function AddVehicleDialog() {
+export const AddVehicleDialog = () =>{
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -40,12 +40,12 @@ export function AddVehicleDialog() {
 
   const { data: branches } = useQuery({
     queryKey: ['branches'],
-    queryFn: () => fetcher(`${process.env.NEXT_PUBLIC_API_URL}/branches`),
+    queryFn: () => fetcher(`branches`),
   })
 
   const mutation = useMutation({
     mutationFn: (data) =>
-      fetcher(`${process.env.NEXT_PUBLIC_API_URL}/vehicles`, {
+      fetcher(`vehicles`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
@@ -75,7 +75,7 @@ export function AddVehicleDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
-          <Icons.plus className="mr-2 h-4 w-4" />
+          <Iconsdata.plus className="mr-2 h-4 w-4" />
           Add Vehicle
         </Button>
       </DialogTrigger>
@@ -186,7 +186,7 @@ export function AddVehicleDialog() {
             </Button>
             <Button type="submit" disabled={mutation.isLoading}>
               {mutation.isLoading && (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                <Iconsdata.spinner className="mr-2 h-4 w-4 animate-spin" />
               )}
               Add Vehicle
             </Button>

@@ -29,9 +29,6 @@ import { fetcher, formatDate } from "@/lib/utils"
 export function ComplaintDialog({
   complaintId,
   children,
-}: {
-  complaintId?: string
-  children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -39,13 +36,13 @@ export function ComplaintDialog({
 
   const { data: complaint, isLoading: isLoadingComplaint } = useQuery({
     queryKey: ["complaint", complaintId],
-    queryFn: () => fetcher(`/api/v1/complaints/${complaintId}`),
+    queryFn: () => fetcher(`complaints/${complaintId}`),
     enabled: !!complaintId && open,
   })
 
   const { data: branches } = useQuery({
     queryKey: ["branches"],
-    queryFn: () => fetcher("/api/v1/branches"),
+    queryFn: () => fetcher("branches"),
     enabled: open,
   })
 
@@ -69,11 +66,11 @@ export function ComplaintDialog({
   const mutation = useMutation({
     mutationFn: (data) =>
       complaintId
-        ? fetcher(`/api/v1/complaints/${complaintId}`, {
+        ? fetcher(`complaints/${complaintId}`, {
             method: "PUT",
             body: JSON.stringify(data),
           })
-        : fetcher("/api/v1/complaints", {
+        : fetcher("complaints", {
             method: "POST",
             body: JSON.stringify(data),
           }),
@@ -91,7 +88,7 @@ export function ComplaintDialog({
       reset()
       setOpen(false)
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "Error",
@@ -100,7 +97,7 @@ export function ComplaintDialog({
     },
   })
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data) => {
     mutation.mutate(data)
   }
 
@@ -134,7 +131,7 @@ export function ComplaintDialog({
               />
               {errors.title && (
                 <p className="text-sm text-red-500">
-                  {errors.title.message as string}
+                  {errors.title.message }
                 </p>
               )}
             </div>
@@ -150,7 +147,7 @@ export function ComplaintDialog({
               />
               {errors.description && (
                 <p className="text-sm text-red-500">
-                  {errors.description.message as string}
+                  {errors.description.message }
                 </p>
               )}
             </div>
@@ -202,7 +199,7 @@ export function ComplaintDialog({
                     <SelectValue placeholder="Select branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    {branches?.branches?.map((branch: any) => (
+                    {branches?.branches?.map((branch) => (
                       <SelectItem key={branch._id} value={branch._id}>
                         {branch.name}
                       </SelectItem>

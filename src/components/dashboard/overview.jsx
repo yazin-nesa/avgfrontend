@@ -26,7 +26,7 @@ export const options = {
   responsive: true,
   plugins: {
     legend: {
-      position: "top" as const,
+      position: "top" ,
     },
     title: {
       display: true,
@@ -38,7 +38,7 @@ export const options = {
 export function Overview() {
   const { data } = useQuery({
     queryKey: ["overview-stats"],
-    queryFn: () => fetcher("/api/v1/dashboard/overview"),
+    queryFn: () => fetcher("dashboard/overview"),
   })
 
   const chartData = {

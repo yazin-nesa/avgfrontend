@@ -1,3 +1,5 @@
+//src/app/(dashboard)/branches/page.js
+
 "use client"
 
 import { useState } from "react"
@@ -25,7 +27,7 @@ export default function BranchesPage() {
     queryKey: ["branches", searchTerm, page],
     queryFn: () =>
       fetcher(
-        `/api/v1/branches?search=${searchTerm}&page=${page}&limit=${limit}`
+        `branches?search=${searchTerm}&page=${page}&limit=${limit}`
       ),
   })
 

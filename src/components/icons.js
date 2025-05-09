@@ -31,7 +31,7 @@ import {
   LogOut
 } from "lucide-react"
 
-export const Icons = {
+export const Iconsdata = {
   logo: Command,
   close: X,
   spinner: Loader2,

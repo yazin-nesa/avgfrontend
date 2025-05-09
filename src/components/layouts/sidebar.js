@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Icons } from '@/components/icons'
+import { Iconsdata } from '@/components/icons'
 
 const roleBasedNavItems = {
   admin: [
@@ -115,12 +115,17 @@ export function Sidebar({ user }) {
   const pathname = usePathname()
   const navItems = roleBasedNavItems[user?.role] || []
 
+  const renderIcon = (iconName) => {
+    const IconComponent = Iconsdata[iconName]
+    return IconComponent ? <IconComponent className="mr-2 h-4 w-4" /> : null
+  }
+
   return (
     <div className="hidden border-r bg-background lg:block lg:w-64">
       <div className="flex h-full flex-col">
         <div className="flex h-14 items-center border-b px-4">
           <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" />
+            {Iconsdata.logo && <Iconsdata.logo className="h-6 w-6" />}
             <span className="font-bold">{process.env.NEXT_PUBLIC_COMPANY_NAME}</span>
           </Link>
         </div>
@@ -137,9 +142,7 @@ export function Sidebar({ user }) {
                     : 'transparent'
                 )}
               >
-                {Icons[item.icon] && (
-                  <Icons[item.icon] className="mr-2 h-4 w-4" />
-                )}
+                {renderIcon(item.icon)}
                 {item.title}
               </Link>
             ))}
@@ -147,7 +150,7 @@ export function Sidebar({ user }) {
         </nav>
         <div className="border-t p-4">
           <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2">
-            <Icons.user className="h-4 w-4" />
+            {Iconsdata.user && <Iconsdata.user className="h-4 w-4" />}
             <div className="space-y-1">
               <p className="text-sm font-medium leading-none">
                 {user?.firstName} {user?.lastName}
@@ -159,4 +162,4 @@ export function Sidebar({ user }) {
       </div>
     </div>
   )
-} 
+}

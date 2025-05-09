@@ -1,5 +1,3 @@
-//src/app/(dashboard)/staff/page.js
-
 "use client"
 
 import { useState } from "react"
@@ -14,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { UserPlus } from "lucide-react"
+import { Loader2, UserPlus } from "lucide-react"
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog"
 import { StaffDetailsDialog } from "@/components/staff/staff-details-dialog"
 import { fetcher } from "@/lib/utils"
@@ -23,7 +21,7 @@ export default function StaffPage() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const pageSize = 10
-
+  
   const { data, isLoading } = useQuery({
     queryKey: ["staff", search, page],
     queryFn: () =>
@@ -43,7 +41,6 @@ export default function StaffPage() {
           </AddStaffDialog>
         </div>
       </div>
-
       <div className="flex items-center space-x-2">
         <Input
           placeholder="Search staff..."
@@ -52,7 +49,6 @@ export default function StaffPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -66,44 +62,60 @@ export default function StaffPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.users?.map((user) => (
-              <TableRow key={user._id}>
-                <TableCell>
-                  {user.firstName} {user.lastName}
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell className="capitalize">{user.role}</TableCell>
-                <TableCell>{user.branch?.name}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.isActive ? "Active" : "Inactive"}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <StaffDetailsDialog userId={user._id}>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </StaffDetailsDialog>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  <div className="flex justify-center items-center">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    Loading staff data...
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : data?.userdata && data.userdata.length > 0 ? (
+              data.userdata.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>
+                    {user.firstName} {user.lastName}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="capitalize">{user.role}</TableCell>
+                  <TableCell>{user.branch?.name}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        user.status == "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.status == "active" ? "Active" : "Inactive"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <StaffDetailsDialog userId={user._id}>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </StaffDetailsDialog>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  No staff members found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
-
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
+          disabled={page === 1 || isLoading}
         >
           Previous
         </Button>
@@ -111,11 +123,11 @@ export default function StaffPage() {
           variant="outline"
           size="sm"
           onClick={() => setPage((p) => p + 1)}
-          disabled={!data?.hasMore}
+          disabled={!data?.hasMore || isLoading}
         >
           Next
         </Button>
       </div>
     </div>
   )
-} 
+}

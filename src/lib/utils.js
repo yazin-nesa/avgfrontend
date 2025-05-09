@@ -1,11 +1,10 @@
 import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "tailwind-merge";
+import { apiClient } from "./api";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-
-
 
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat("en-US", {
@@ -14,23 +13,25 @@ export const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// You can also define other utility functions here
-export const fetcher = async (url) => {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/${url}/`,{
-    headers:{
-      authorization:`Bearer ${localStorage.getItem("token")}`,
-      user:localStorage.getItem("user")
-    }
-  });
-  if (!res.ok) throw new Error("Failed to fetch");
-  return res.json();
+/**
+ * Fetcher function compatible with React Query
+ * This now uses the apiClient consistently
+ */
+export const fetcher = async (url, options = {}) => {
+  try {
+    // Use the apiClient for consistent handling
+    return await apiClient.get(url, options);
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw new Error(error.message || "Failed to fetch data");
+  }
 };
 
 export function formatDate(dateStr) {
-  const date = new Date(dateStr)
+  const date = new Date(dateStr);
   return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
