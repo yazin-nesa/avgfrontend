@@ -28,7 +28,10 @@ import {
   Car,
   BarChart3,
   MessageSquare,
-  LogOut
+  LogOut,
+  BarChart2,
+  
+
 } from "lucide-react"
 
 export const Iconsdata = {
@@ -38,12 +41,16 @@ export const Iconsdata = {
   chevronLeft: ChevronLeft,
   chevronRight: ChevronRight,
   trash: Trash,
+  creditCard:CreditCard,
+  plus: Plus,
   settings: Settings,
   user: User,
   arrowRight: ArrowRight,
   help: HelpCircle,
   pizza: Pizza,
+  barChart2: BarChart2,
   sun: SunMedium,
+  fileText:FileText,
   moon: Moon,
   laptop: Laptop,
   branch: Building2,

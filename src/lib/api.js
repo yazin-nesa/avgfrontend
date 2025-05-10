@@ -55,8 +55,8 @@ export const apiClient = {
    * @returns {Promise<any>} - JSON response
    */
   request: async (method, endpoint, data = null, options = {}) => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/${endpoint.endsWith('/') ? endpoint : endpoint + '/'}`;
-    
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/${endpoint.includes('?') ? endpoint : (endpoint.endsWith('/') ? endpoint : endpoint + '')}`;
+
     // Prepare headers with authentication token
     const headers = {
       'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export const apiClient = {
     }
     
     try {
-      console.log(`API Request ${method} ${url}:`, { headers, data });
+      console.log(`API Request --  ${method} ${url}:`, { headers, data });
       const response = await fetch(url, requestOptions);
       
       // Handle 401 Unauthorized (token expired)

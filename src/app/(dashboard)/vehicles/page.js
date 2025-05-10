@@ -9,7 +9,7 @@ import { Iconsdata } from '@/components/icons'
 import { Table } from '@/components/ui/table'
 
 import { fetcher, formatDate } from '@/lib/utils'
-import { AddVehicleDialog } from '@/components/vehicles/add-vehicle-dialog'
+import { AddVehicleDialog } from '@/components/vehicles/AddVehicleDialog'
 
 const columns = [
   {

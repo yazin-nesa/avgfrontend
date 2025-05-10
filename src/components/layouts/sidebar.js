@@ -10,7 +10,7 @@ const roleBasedNavItems = {
     {
       title: 'Dashboard',
       href: '/admin/dashboard',
-      icon: 'chart',
+      icon: 'chart', // could keep this
     },
     {
       title: 'Branches',
@@ -30,14 +30,30 @@ const roleBasedNavItems = {
     {
       title: 'Incentives',
       href: '/admin/incentives',
-      icon: 'chart',
+      icon: 'creditCard', // changed from chart to something finance-related
     },
     {
       title: 'Complaints',
       href: '/admin/complaints',
       icon: 'complaint',
     },
+    {
+      title: 'Staff Performance',
+      href: '/admin/performance',
+      icon: 'barChart2', // new distinct chart icon
+    },
+    {
+      title: 'Service Reports',
+      href: '/admin/reports',
+      icon: 'fileText', // represents reports/documents
+    },
+    {
+      title: 'Service types',
+      href: '/admin/servicetype',
+      icon: 'settings', // makes sense for types/configurations
+    },
   ],
+  
   hr: [
     {
       title: 'Dashboard',

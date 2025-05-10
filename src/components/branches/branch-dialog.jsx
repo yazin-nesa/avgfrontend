@@ -42,15 +42,23 @@ export function BranchDialog({ branchId, children }) {
   const branch = branchData?.data || branchData
 
   // Fetch manager options
-  const { data: managerData } = useQuery({
+  const { data: managerData, isLoading: isLoadingManagers } = useQuery({
     queryKey: ["managers"],
     queryFn: () => fetcher("users?role=manager"),
     enabled: open,
   })
 
-  // Extract managers array correctly
-  const managers = managerData?.data || managerData?.users || []
-  console.log("managers data :", managers)
+  // Extract managers array correctly - FIXED: Now checking for userdata which is what the API returns
+  console.log("managers data:", managerData)
+  const managers = managerData?.userdata || managerData?.data || []
+  
+  // Debug output to help diagnose the issue
+  useEffect(() => {
+    if (managerData) {
+      console.log("Received manager data structure:", Object.keys(managerData))
+      console.log("Managers array length:", managers.length)
+    }
+  }, [managerData, managers])
 
   const {
     register,
@@ -100,13 +108,13 @@ export function BranchDialog({ branchId, children }) {
     mutationFn: (data) =>
       branchId
         ? fetcher(`branches/${branchId}`, {
-            method: "PUT",
-            body: JSON.stringify(data),
-          })
+          method: "PUT",
+          body: JSON.stringify(data),
+        })
         : fetcher("branches", {
-            method: "POST",
-            body: JSON.stringify(data),
-          }),
+          method: "POST",
+          body: JSON.stringify(data),
+        }),
     onSuccess: () => {
       queryClient.invalidateQueries(["branches"])
       if (branchId) {
@@ -177,7 +185,7 @@ export function BranchDialog({ branchId, children }) {
                     <p className="text-sm text-red-500">{errors.address.street.message}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="city" className="text-xs">City</Label>
                   <Input
@@ -188,7 +196,7 @@ export function BranchDialog({ branchId, children }) {
                     <p className="text-sm text-red-500">{errors.address.city.message}</p>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label htmlFor="state" className="text-xs">State</Label>
@@ -200,7 +208,7 @@ export function BranchDialog({ branchId, children }) {
                       <p className="text-sm text-red-500">{errors.address.state.message}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="zipCode" className="text-xs">ZIP Code</Label>
                     <Input
@@ -227,13 +235,13 @@ export function BranchDialog({ branchId, children }) {
                   <p className="text-sm text-red-500">{errors.phone.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  {...register("email", { 
+                  {...register("email", {
                     required: "Email is required",
                     pattern: {
                       value: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
@@ -254,7 +262,7 @@ export function BranchDialog({ branchId, children }) {
                 <Input
                   id="vehicles"
                   type="number"
-                  {...register("capacity.vehicles", { 
+                  {...register("capacity.vehicles", {
                     required: "Vehicle capacity is required",
                     valueAsNumber: true
                   })}
@@ -263,13 +271,13 @@ export function BranchDialog({ branchId, children }) {
                   <p className="text-sm text-red-500">{errors.capacity.vehicles.message}</p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="staff">Staff Capacity</Label>
                 <Input
                   id="staff"
                   type="number"
-                  {...register("capacity.staff", { 
+                  {...register("capacity.staff", {
                     required: "Staff capacity is required",
                     valueAsNumber: true
                   })}
@@ -283,21 +291,32 @@ export function BranchDialog({ branchId, children }) {
             {/* Manager */}
             <div className="space-y-2">
               <Label htmlFor="manager">Branch Manager</Label>
-              <Select
-                onValueChange={(value) => setValue("manager", value)}
-                defaultValue={branch?.manager?._id || undefined}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  {managers.map((manager) => (
-                    <SelectItem key={manager._id} value={manager._id}>
-                      {manager.firstName} {manager.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isLoadingManagers ? (
+                <div className="h-10 flex items-center px-4 border rounded-md">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  <span className="text-sm text-muted-foreground">Loading managers...</span>
+                </div>
+              ) : managers.length > 0 ? (
+                <Select
+                  onValueChange={(value) => setValue("manager", value)}
+                  defaultValue={branch?.manager?._id || ""}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managers.map((manager) => (
+                      <SelectItem key={manager._id} value={manager._id}>
+                        {manager.firstName} {manager.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="h-10 flex items-center px-4 border rounded-md bg-muted/20">
+                  <span className="text-sm text-muted-foreground">No managers available</span>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-1">Leave empty to set as unassigned</p>
             </div>
 

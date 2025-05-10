@@ -60,7 +60,7 @@ export default function VehicleDetailsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {vehicle.owner.firstName} {vehicle.owner.lastName}
+              {vehicle.owner.name}
             </div>
             <p className="text-xs text-muted-foreground">
               Contact: {vehicle.owner.phone}

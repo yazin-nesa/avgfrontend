@@ -71,8 +71,8 @@ export default function StaffPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : data?.userdata && data.userdata.length > 0 ? (
-              data.userdata.map((user) => (
+            ) : data.data && data.data.length > 0 ? (
+              data.data.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell>
                     {user.firstName} {user.lastName}

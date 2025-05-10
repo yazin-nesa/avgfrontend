@@ -41,17 +41,20 @@ export function AddStaffDialog({ children }) {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
     watch,
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       role: "staff",
       status: "active",
+      primaryServiceCategory: "administration",
     },
   })
 
-  // Watch the branch value to ensure it's being set
+  // Watch form values
+  const selectedRole = watch("role")
   const selectedBranch = watch("branch")
+  const selectedPrimaryServiceCategory = watch("primaryServiceCategory")
 
   const mutation = useMutation({
     mutationFn: (data) => {
@@ -165,7 +168,6 @@ export function AddStaffDialog({ children }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            {/* Register the role select properly */}
             <Select
               onValueChange={(value) => setValue("role", value)}
               defaultValue="staff"
@@ -181,9 +183,30 @@ export function AddStaffDialog({ children }) {
               </SelectContent>
             </Select>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="primaryServiceCategory">Primary Service Category</Label>
+            <Select
+              onValueChange={(value) => setValue("primaryServiceCategory", value)}
+              defaultValue="administration"
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select primary service category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="routine_maintenance">Routine Maintenance</SelectItem>
+                <SelectItem value="repair">Repair</SelectItem>
+                <SelectItem value="inspection">Inspection</SelectItem>
+                <SelectItem value="body_work">Body Work</SelectItem>
+                <SelectItem value="washing">Washing</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="administration">Administration</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="branch">Branch</Label>
-            {/* Register the branch field properly */}
             <Select 
               onValueChange={(value) => setValue("branch", value)}
               value={selectedBranch}
@@ -230,7 +253,14 @@ export function AddStaffDialog({ children }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isLoading || isSubmitting}>
+            <Button 
+              type="submit" 
+              disabled={
+                mutation.isLoading || 
+                isSubmitting || 
+                !selectedBranch
+              }
+            >
               {(mutation.isLoading || isSubmitting) && (
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               )}
@@ -241,4 +271,4 @@ export function AddStaffDialog({ children }) {
       </DialogContent>
     </Dialog>
   )
-}
+}f

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/tabs'
 import { Iconsdata } from '@/components/icons'
 import { fetcher, formatDate, formatCurrency } from '@/lib/utils'
-import { AddServiceDialog } from './add-service-dialog'
+import { AddServiceDialog } from './AddServiceDialog'
 
 export function VehicleDetailsDialog({ vehicleId }) {
   const [open, setOpen] = useState(false)
