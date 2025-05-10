@@ -8,7 +8,9 @@ import { fetcher, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ServiceDialog } from "@/components/vehicles/service-dialog"
+import { VehicleUpdateDialog } from "@/components/vehicles/UpdateVehicleInfo"
 import { Button } from "@/components/ui/button"
+import { Edit, Plus } from "lucide-react"
 
 // Helper function outside component to prevent re-creation on every render
 const getStatusBadge = (status) => {
@@ -18,8 +20,7 @@ const getStatusBadge = (status) => {
     active: "bg-green-500",
     in_service: "bg-blue-500",
     inactive: "bg-gray-500",
-    sold: "bg-purple-500",
-    scrapped: "bg-red-500"
+    completed: "bg-purple-500"
   }
   
   return (
@@ -61,9 +62,20 @@ export default function VehicleDetailsPage() {
             {getStatusBadge(vehicleData.status)}
           </div>
         </div>
-        <ServiceDialog vehicleId={vehicleId}>
-          <Button size="lg">Add Service</Button>
-        </ServiceDialog>
+        <div className="flex gap-2">
+          <VehicleUpdateDialog vehicle={vehicleData}>
+            <Button variant="outline" size="lg">
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Vehicle
+            </Button>
+          </VehicleUpdateDialog>
+          <ServiceDialog vehicleId={vehicleId}>
+            <Button size="lg">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Service
+            </Button>
+          </ServiceDialog>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -155,6 +167,8 @@ export default function VehicleDetailsPage() {
                     <dd>{vehicleData.fuelType || "N/A"}</dd>
                     <dt className="text-muted-foreground">Transmission</dt>
                     <dd>{vehicleData.transmission || "N/A"}</dd>
+                    <dt className="text-muted-foreground">Vehicle Type</dt>
+                    <dd className="capitalize">{vehicleData.type || "N/A"}</dd>
                   </dl>
                 </div>
                 <div>
@@ -168,8 +182,12 @@ export default function VehicleDetailsPage() {
                     <dd>{vehicleData.serviceInterval ? `${vehicleData.serviceInterval} km` : "N/A"}</dd>
                     <dt className="text-muted-foreground">Purchase Date</dt>
                     <dd>{vehicleData.purchaseDate ? formatDate(vehicleData.purchaseDate) : "N/A"}</dd>
+                    <dt className="text-muted-foreground">Insurance Provider</dt>
+                    <dd>{vehicleData.insuranceInfo?.provider || "N/A"}</dd>
+                    <dt className="text-muted-foreground">Policy Number</dt>
+                    <dd>{vehicleData.insuranceInfo?.policyNumber || "N/A"}</dd>
                     <dt className="text-muted-foreground">Insurance Expiry</dt>
-                    <dd>{vehicleData.insuranceExpiry ? formatDate(vehicleData.insuranceExpiry) : "N/A"}</dd>
+                    <dd>{vehicleData.insuranceInfo?.expiryDate ? formatDate(vehicleData.insuranceInfo.expiryDate) : "N/A"}</dd>
                   </dl>
                 </div>
               </div>
@@ -189,19 +207,19 @@ export default function VehicleDetailsPage() {
                     <dd>{vehicleData.owner?.email || "N/A"}</dd>
                     <dt className="text-muted-foreground">Phone</dt>
                     <dd>{vehicleData.owner?.phone || "N/A"}</dd>
-                    <dt className="text-muted-foreground">Address</dt>
-                    <dd>{vehicleData.owner?.address || "N/A"}</dd>
-                    <dt className="text-muted-foreground">City</dt>
-                    <dd>{vehicleData.owner?.city || "N/A"}</dd>
                   </dl>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Additional Information</h3>
+                  <h3 className="text-lg font-semibold mb-2">Address Information</h3>
                   <dl className="grid grid-cols-2 gap-2">
-                    <dt className="text-muted-foreground">Customer Since</dt>
-                    <dd>{vehicleData.owner?.createdAt ? formatDate(vehicleData.owner.createdAt) : "N/A"}</dd>
-                    <dt className="text-muted-foreground">Total Vehicles</dt>
-                    <dd>{vehicleData.owner?.vehicleCount || 1}</dd>
+                    <dt className="text-muted-foreground">Street</dt>
+                    <dd>{vehicleData.owner?.address?.street || "N/A"}</dd>
+                    <dt className="text-muted-foreground">City</dt>
+                    <dd>{vehicleData.owner?.address?.city || "N/A"}</dd>
+                    <dt className="text-muted-foreground">State</dt>
+                    <dd>{vehicleData.owner?.address?.state || "N/A"}</dd>
+                    <dt className="text-muted-foreground">ZIP Code</dt>
+                    <dd>{vehicleData.owner?.address?.zipCode || "N/A"}</dd>
                   </dl>
                 </div>
               </div>

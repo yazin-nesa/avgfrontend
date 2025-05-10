@@ -112,9 +112,10 @@ export function ServiceHistory({ vehicleId }) {
                   <TableCell>{formatDate(service.estimatedCompletionDate)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {service.serviceTypes.map((type, index) => (
+                      {service.serviceItems?.map((item, index) => (
                         <Badge key={index} variant="outline">
-                          {type.type.replace(/_/g, ' ')}
+                          {/* Check if serviceType is populated or just an ID */}
+                          {item.serviceType?.name || "Service"}
                         </Badge>
                       ))}
                     </div>
@@ -144,30 +145,30 @@ export function ServiceHistory({ vehicleId }) {
                         </SheetHeader>
                         
                         <Accordion type="single" collapsible className="mt-6">
-                          {service.serviceTypes.map((serviceType, index) => (
+                          {service.serviceItems.map((serviceItem, index) => (
                             <AccordionItem key={index} value={`item-${index}`}>
                               <AccordionTrigger className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <Badge className={`${getStatusColor(serviceType.status)} capitalize text-white`}>
-                                    {serviceType.status}
+                                  <Badge className={`${getStatusColor(serviceItem.status)} capitalize text-white`}>
+                                    {serviceItem.status}
                                   </Badge>
-                                  <span className="capitalize">{serviceType.type.replace(/_/g, ' ')}</span>
+                                  <span className="capitalize">{serviceItem.serviceType?.name || "Service Item"}</span>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent>
                                 <div className="space-y-4 pt-2 pb-4">
                                   <div>
                                     <h4 className="text-sm font-medium text-muted-foreground">Description</h4>
-                                    <p>{serviceType.description}</p>
+                                    <p>{serviceItem.description}</p>
                                   </div>
                                   
                                   <div>
                                     <h4 className="text-sm font-medium text-muted-foreground">Technicians</h4>
                                     <div className="flex flex-wrap gap-2 mt-1">
-                                      {serviceType.technicians.map((tech, idx) => (
+                                      {serviceItem.technicians.map((tech, idx) => (
                                         <div key={idx} className="flex items-center gap-1 border rounded-full px-3 py-1 text-sm">
                                           <UserIcon size={14} />
-                                          <span> name ={tech}</span>
+                                          <span>{tech.technician?.firstName || "Technician"} {tech.technician?.lastName || ""}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -175,10 +176,10 @@ export function ServiceHistory({ vehicleId }) {
                                   
                                   <div>
                                     <h4 className="text-sm font-medium text-muted-foreground">Labor</h4>
-                                    <p>{serviceType.laborHours} hours (₹{serviceType.laborCost})</p>
+                                    <p>{serviceItem.laborHours} hours (₹{serviceItem.laborCost})</p>
                                   </div>
                                   
-                                  {serviceType.parts && serviceType.parts.length > 0 && (
+                                  {serviceItem.parts && serviceItem.parts.length > 0 && (
                                     <div>
                                       <h4 className="text-sm font-medium text-muted-foreground">Parts</h4>
                                       <Table>
@@ -191,7 +192,7 @@ export function ServiceHistory({ vehicleId }) {
                                           </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                          {serviceType.parts.map((part, pidx) => (
+                                          {serviceItem.parts.map((part, pidx) => (
                                             <TableRow key={pidx}>
                                               <TableCell>{part.name}</TableCell>
                                               <TableCell>{part.quantity}</TableCell>
@@ -210,8 +211,8 @@ export function ServiceHistory({ vehicleId }) {
                                     </h4>
                                     <p className="text-lg font-semibold">
                                       {formatCurrency(
-                                        serviceType.laborCost + 
-                                        (serviceType.parts?.reduce((sum, part) => sum + part.totalCost, 0) || 0)
+                                        serviceItem.laborCost + 
+                                        (serviceItem.parts?.reduce((sum, part) => sum + part.totalCost, 0) || 0)
                                       )}
                                     </p>
                                   </div>
@@ -234,7 +235,7 @@ export function ServiceHistory({ vehicleId }) {
                                 <div key={idx} className="mt-2 border-l-2 border-muted pl-4">
                                   <p className="text-sm">{note.content}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    By {note.createdBy.firstName} {note.createdBy.lastName} on{" "}
+                                    By {note.createdBy?.firstName || ""} {note.createdBy?.lastName || ""} on{" "}
                                     {formatDate(note.createdAt)}
                                   </p>
                                 </div>

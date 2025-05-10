@@ -49,8 +49,6 @@ export function ServiceDialog({ vehicleId, children }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  // Store service types from API
-
 
   const { data: vehicle, isLoading: isLoadingVehicle } = useQuery({
     queryKey: ["vehicle", vehicleId],
@@ -58,6 +56,7 @@ export function ServiceDialog({ vehicleId, children }) {
     enabled: open,
   })
 
+  // Modified query to fetch all technicians (staff with active status)
   const { data: technicians, isLoading: isLoadingTechnicians } = useQuery({
     queryKey: ["users"],
     queryFn: () => fetcher(`users?role=staff&status=active`),
@@ -68,11 +67,9 @@ export function ServiceDialog({ vehicleId, children }) {
     queryKey: ["service-types"],
     queryFn: () => fetcher(`service-types`),
     enabled: open,
-    
   })
 
-  const serviceTypesData= serviceTypes?.data;
-
+  const serviceTypesData = serviceTypes?.data;
 
   const {
     register,
@@ -150,18 +147,31 @@ export function ServiceDialog({ vehicleId, children }) {
     }, 0);
   };
 
-  // Function to get eligible technicians based on service type
+  // Improved function to get eligible technicians based on service type
   const getEligibleTechnicians = (serviceTypeId) => {
     if (!technicians?.data || !serviceTypeId) {
       return [];
     }
 
+    // Filter technicians who have the capability for this service type
     return technicians.data.filter(tech => 
       tech.serviceCapabilities && 
       tech.serviceCapabilities.some(capability => 
-        capability.serviceType === serviceTypeId
+        capability.serviceType && 
+        capability.serviceType._id === serviceTypeId
       )
     );
+  };
+  
+  // Function to find skill level for a technician and service type
+  const getTechnicianSkillLevel = (technician, serviceTypeId) => {
+    if (!technician.serviceCapabilities) return 0;
+    
+    const capability = technician.serviceCapabilities.find(
+      cap => cap.serviceType && cap.serviceType._id === serviceTypeId
+    );
+    
+    return capability ? capability.skillLevel : 0;
   };
 
   // Watch service type changes to update eligible technicians
@@ -376,7 +386,7 @@ export function ServiceDialog({ vehicleId, children }) {
                                           <SelectValue placeholder="Select service type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                          {serviceTypesData.map((type) => (
+                                          {serviceTypesData?.map((type) => (
                                             <SelectItem key={type._id} value={type._id}>
                                               {type.name}
                                             </SelectItem>
@@ -472,11 +482,9 @@ export function ServiceDialog({ vehicleId, children }) {
                                                   <Label htmlFor={`tech-${serviceItemIndex}-${tech._id}`} className="flex items-center cursor-pointer">
                                                     <User className="mr-2 h-4 w-4" />
                                                     {tech.firstName} {tech.lastName}
-                                                    {tech.serviceCapabilities && (
-                                                      <Badge variant="outline" className="ml-2 text-xs">
-                                                        Skill: {tech.serviceCapabilities.find(cap => cap.serviceType === currentServiceTypeId)?.skillLevel || 1}
-                                                      </Badge>
-                                                    )}
+                                                    <Badge variant="outline" className="ml-2 text-xs">
+                                                      Skill: {getTechnicianSkillLevel(tech, currentServiceTypeId)}
+                                                    </Badge>
                                                   </Label>
                                                 </div>
                                               ))}

@@ -23,7 +23,7 @@ const roleBasedNavItems = {
       icon: 'staff',
     },
     {
-      title: 'Vehicle Services',
+      title: 'Vehicle & Services',
       href: '/admin/vehicles',
       icon: 'vehicle',
     },

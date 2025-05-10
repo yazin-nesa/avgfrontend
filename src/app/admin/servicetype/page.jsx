@@ -7,10 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import ServiceTypeDialog from "@/components/servicetype/ServiceTypeDialog";
 import { fetcher } from "@/lib/utils";
-import { useMutation, useQuery } from '@tanstack/react-query';  // Import React Query
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 const ServicetypesPage = () => {
-
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedServiceType, setSelectedServiceType] = useState(null);
@@ -19,13 +18,10 @@ const ServicetypesPage = () => {
   const { data, refetch } = useQuery({
     queryKey: ['service-types', search],
     queryFn: () => fetcher(`service-types?search=${search}`),
-    
   });
   const serviceTypes = data?.data;
 
-
-  refetch();
-  // Mutation for creating or updating service types
+  // Mutation for creating service types
   const createServiceTypeMutation = useMutation({
     mutationFn: async (newServiceType) => {
       const response = await fetcher('service-types', {
@@ -40,22 +36,44 @@ const ServicetypesPage = () => {
     },
   });
 
+  // Mutation for updating service types
+  const updateServiceTypeMutation = useMutation({
+    mutationFn: async (updatedServiceType) => {
+      const response = await fetcher(`service-types/${updatedServiceType._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedServiceType),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      refetch();  // Refresh service types list
+      setOpen(false);  // Close dialog after submission
+    },
+  });
+
   const handleEdit = (serviceType) => {
     setSelectedServiceType(serviceType);
     setOpen(true); // Open the dialog for editing
   };
 
-  const handleCreate = (newServiceType) => {
-    createServiceTypeMutation.mutate(newServiceType);
+  const handleSubmit = (formData) => {
+    if (selectedServiceType?._id) {
+      // Update existing service type
+      updateServiceTypeMutation.mutate({
+        ...formData,
+        _id: selectedServiceType._id
+      });
+    } else {
+      // Create new service type
+      createServiceTypeMutation.mutate(formData);
+    }
   };
 
   useEffect(() => {
     // If search changes, refetch the data
     if (search !== "") {
       refetch();
-      console.log("serive" , serviceTypes)
     }
-   
   }, [search, refetch]);
 
   return (
@@ -71,7 +89,7 @@ const ServicetypesPage = () => {
           <ServiceTypeDialog
             open={open}
             onClose={() => setOpen(false)}
-            onSubmit={handleCreate} // Submit handler for create
+            onSubmit={handleSubmit} // Unified submit handler
             initialData={selectedServiceType}
           />
         </Dialog>
@@ -94,10 +112,20 @@ const ServicetypesPage = () => {
             <CardContent className="p-4">
               <h3 className="text-lg font-medium">{serviceType.name}</h3>
               <p className="text-sm text-muted-foreground">{serviceType.description}</p>
-              <p className="text-sm mt-1">Status: {serviceType.status}</p>
+              <p className="text-sm mt-1">Status: {serviceType.isActive ? "Active" : "Inactive"}</p>
             </CardContent>
           </Card>
         ))}
+        {serviceTypes && serviceTypes.length === 0 && (
+          <div className="col-span-full text-center py-8 text-muted-foreground">
+            No service types found
+          </div>
+        )}
+        {!serviceTypes && (
+          <div className="col-span-full text-center py-8 text-muted-foreground">
+            Loading service types...
+          </div>
+        )}
       </div>
     </div>
   );
