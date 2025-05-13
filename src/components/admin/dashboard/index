@@ -1,0 +1,7 @@
+1. AdminDashboardPage.js:       This will be the main page that orchestrates and displays all the analytics components. It will fetch the necessary data using react-query.
+2. OverviewCards.js:            This component will display high-level summary statistics like total revenue, total complaints, total registered vehicles, and total active users in a card format.
+3. VehicleAnalyticsCard.js:     This component will visualize vehicle-related analytics, such as the most common makes and models and the distribution of vehicle types (e.g., using bar charts or pie charts).
+4. ComplaintAnalyticsCard.js:   This component will display complaint-related analytics, such as the breakdown of complaints by category, the status overview, and potentially the average resolution time.
+5. RevenueAnalyticsCard.js:     This component will present revenue-related data, such as total revenue over a selected period, revenue by branch, and revenue by service type (e.g., using line charts or bar charts).
+6. TemporalAnalyticsCard.js:    This component will visualize trends over time, such as new user trends, service booking trends, revenue trends, and complaint trends (using line charts).
+7. DatePicker.js:                A reusable component to select the date range for the analytics data. This will allow the admin to filter data for specific periods.

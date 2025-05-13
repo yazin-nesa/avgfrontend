@@ -1,237 +1,287 @@
-//src/app/(dashboard)/page.js
 "use client"
 
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts"
-import { fetcher, formatCurrency } from "@/lib/utils"
-import { Skeleton } from "@/components/ui/skeleton"
+    Car,
+    Users,
+    Building2,
+    AlertCircle,
+    Wrench,
+    DollarSign,
+    BarChart3,
+    TrendingUp,
+} from "lucide-react"
+import { StatsCard } from "@/components/admin/dashboard/stats-card"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { fetcher } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton" // Import the Skeleton component
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
+// Define a simple loading skeleton for StatsCard
+function StatsCardSkeleton() {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle><Skeleton className="h-6 w-1/2" /></CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-4 w-1/4 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+        </Card>
+    )
+}
+
+// Define a simple loading skeleton for Cards with content lists
+function CardListSkeleton({ items = 3 }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle><Skeleton className="h-6 w-1/2" /></CardTitle>
+                <CardDescription><Skeleton className="h-4 w-1/3" /></CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {Array.from({ length: items }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                        <div>
+                            <Skeleton className="h-4 w-1/3" />
+                            <Skeleton className="h-3 w-1/4 mt-1" />
+                        </div>
+                        <Skeleton className="h-4 w-1/6" />
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function DashboardPage() {
-  const { data: analytics, isLoading, error } = useQuery({
-    queryKey: ["analytics"],
-    queryFn: async () => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics`)
-      if (!response.ok) {
-        throw new Error("Failed to fetch analytics")
-      }
-      return response.json()
-    }
-  })
+    const { data: summaryData, isLoading: isSummaryLoading } = useQuery({
+        queryKey: ["dashboard-summary"],
+        queryFn: () => fetcher("admin/analytics/dashboard-summary"),
+    })
 
-  if (isLoading) {
+    const { data: branchPerformance, isLoading: isBranchLoading } = useQuery({
+        queryKey: ["branch-performance"],
+        queryFn: () => fetcher("admin/analytics/branch-performance"),
+    })
+
+    const { data: serviceAnalytics, isLoading: isServiceLoading } = useQuery({
+        queryKey: ["service-analytics"],
+        queryFn: () => fetcher("admin/analytics/service-analytics"),
+    })
+
+    const { data: staffPerformance, isLoading: isStaffLoading } = useQuery({
+        queryKey: ["staff-performance"],
+        queryFn: () => fetcher("admin/analytics/staff-performance"),
+    })
+
+    const summary = summaryData?.data || {}
+    const branches = branchPerformance?.data || []
+    const services = serviceAnalytics?.data || {}
+    const staff = staffPerformance?.data || {}
+
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                <Skeleton className="h-4 w-[100px]" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                <Skeleton className="h-8 w-[120px]" />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                <Skeleton className="h-4 w-[80px]" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <h3 className="text-lg font-medium text-red-800">Error loading dashboard data</h3>
-        <p className="mt-2 text-sm text-red-700">{error.message}</p>
-      </div>
-    )
-  }
-
-  const defaultAnalytics = {
-    totalRevenue: 0,
-    revenueGrowth: 0,
-    totalServices: 0,
-    servicesGrowth: 0,
-    activeVehicles: 0,
-    vehiclesGrowth: 0,
-    totalComplaints: 0,
-    complaintsGrowth: 0
-  }
-
-  const data = analytics || defaultAnalytics
-
-  return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here's an overview of your business
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(data.totalRevenue)}
+        <div className="p-6 space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <p className="text-muted-foreground">Welcome to your dashboard overview.</p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              +{data.revenueGrowth}% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Services</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.totalServices}</div>
-            <p className="text-xs text-muted-foreground">
-              +{data.servicesGrowth}% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.pendingServices}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {analytics.completedServices} completed this month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Complaints
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.activeComplaints}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {analytics.resolvedComplaints} resolved this month
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
-      <Tabs defaultValue="revenue" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="complaints">Complaints</TabsTrigger>
-        </TabsList>
-        <TabsContent value="revenue">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={analytics.revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="amount"
-                      stroke="#8884d8"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="services">
-          <Card>
-            <CardHeader>
-              <CardTitle>Service Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analytics.serviceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="type" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="complaints">
-          <Card>
-            <CardHeader>
-              <CardTitle>Complaint Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={analytics.complaintData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={150}
-                      fill="#8884d8"
-                      label
-                    >
-                      {analytics.complaintData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
+            {/* Key Metrics with Loading */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {isSummaryLoading ? (
+                    <>
+                        <StatsCardSkeleton />
+                        <StatsCardSkeleton />
+                        <StatsCardSkeleton />
+                        <StatsCardSkeleton />
+                    </>
+                ) : (
+                    <>
+                        <StatsCard
+                            title="Total Vehicles"
+                            value={summary?.vehicleStats?.total || 0}
+                            description={`${summary?.vehicleStats?.active || 0} active vehicles`}
+                            icon={Car}
                         />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-} 
+                        <StatsCard
+                            title="Total Services"
+                            value={summary?.serviceStats?.total || 0}
+                            description={`${summary?.serviceStats?.completionRate || 0}% completion rate`}
+                            icon={Wrench}
+                        />
+                        <StatsCard
+                            title="Active Branches"
+                            value={summary?.branchStats?.active || 0}
+                            description={`Out of ${summary?.branchStats?.total || 0} total branches`}
+                            icon={Building2}
+                        />
+                        <StatsCard
+                            title="Total Revenue"
+                            value={`$${(summary?.financialStats?.totalRevenue || 0).toLocaleString()}`}
+                            description="Total earnings from services"
+                            icon={DollarSign}
+                        />
+                    </>
+                )}
+            </div>
+
+            {/* Service Status with Loading */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {isSummaryLoading ? (
+                    <CardListSkeleton items={3} />
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Service Status</CardTitle>
+                            <CardDescription>Current service distribution</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm">Pending</p>
+                                        <p className="text-sm font-medium">{summary?.serviceStats?.pending || 0}</p>
+                                    </div>
+                                    <Progress value={(summary?.serviceStats?.pending / summary?.serviceStats?.total) * 100 || 0} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm">In Progress</p>
+                                        <p className="text-sm font-medium">{summary?.serviceStats?.inProgress || 0}</p>
+                                    </div>
+                                    <Progress value={(summary?.serviceStats?.inProgress / summary?.serviceStats?.total) * 100 || 0} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm">Completed</p>
+                                        <p className="text-sm font-medium">{summary?.serviceStats?.completed || 0}</p>
+                                    </div>
+                                    <Progress value={(summary?.serviceStats?.completed / summary?.serviceStats?.total) * 100 || 0} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Top Performing Branches with Loading */}
+                {isBranchLoading ? (
+                    <CardListSkeleton items={5} />
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Top Performing Branches</CardTitle>
+                            <CardDescription>By service completion rate</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {branches?.slice(0, 5).map((branch) => (
+                                <div key={branch._id} className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm font-medium">{branch.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {branch.stats.services.completionRate}%
+                                        </p>
+                                    </div>
+                                    <Progress value={parseFloat(branch.stats.services.completionRate)} />
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Staff Performance with Loading */}
+                {isStaffLoading ? (
+                    <CardListSkeleton items={5} />
+                ) : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Staff Performance</CardTitle>
+                            <CardDescription>Top performing staff members</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {staff?.staffPerformance?.slice(0, 5).map((member) => (
+                                <div key={member._id} className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium">{member.name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {member.period.serviceItems.completed} services completed
+                                        </p>
+                                    </div>
+                                    <div className="text-sm font-medium">
+                                        {member.period.serviceItems.completionRate}%
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* Recent Activity with Loading */}
+            <div className="grid gap-4 md:grid-cols-2">
+                {isSummaryLoading ? (
+                    <>
+                        <CardListSkeleton items={3} />
+                        <CardListSkeleton items={3} />
+                    </>
+                ) : (
+                    <>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Recent Services</CardTitle>
+                                <CardDescription>Latest service activities</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {summary?.recentActivity?.services?.map((service) => (
+                                        <div key={service._id} className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {service.vehicle?.make} {service.vehicle?.model}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {service.branch?.name}
+                                                </p>
+                                            </div>
+                                            <div className="text-sm">{service.status}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Recent Complaints</CardTitle>
+                                <CardDescription>Latest customer complaints</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {summary?.recentActivity?.complaints?.map((complaint) => (
+                                        <div key={complaint._id} className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium">{complaint.title}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {complaint.filedBy?.firstName} {complaint.filedBy?.lastName}
+                                                </p>
+                                            </div>
+                                            <div className="text-sm">{complaint.status}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </>
+                )}
+            </div>
+        </div>
+    )
+}

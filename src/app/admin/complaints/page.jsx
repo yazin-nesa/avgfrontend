@@ -60,7 +60,7 @@ export default function ComplaintsPage() {
       ),
   })
 
-  const complaints = data?.complaints || []
+  const complaints = data?.data || []
   const totalPages = Math.ceil((data?.total || 0) / limit)
 
   return (

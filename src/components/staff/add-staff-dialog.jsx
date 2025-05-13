@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Trash2, Plus } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { apiClient } from "@/lib/api" // Import the apiClient instead of fetcher
 
@@ -29,11 +31,26 @@ export function AddStaffDialog({ children }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const [serviceCapabilities, setServiceCapabilities] = useState([])
 
   // Use apiClient for fetching branches
   const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ["branches"],
     queryFn: () => apiClient.get("branches"),
+    enabled: open,
+  })
+  
+  const { data: designation, isLoading: designationLoading } = useQuery({
+    queryKey: ["designation"],
+    queryFn: () => apiClient.get("designation"),
+    enabled: open,
+  })
+  
+  // Fetch service types
+  const { data: serviceTypes, isLoading: serviceTypesLoading } = useQuery({
+    queryKey: ["serviceTypes"],
+    queryFn: () => apiClient.get("service-types"),
+    enabled: open,
   })
 
   const {
@@ -56,19 +73,91 @@ export function AddStaffDialog({ children }) {
   const selectedBranch = watch("branch")
   const selectedPrimaryServiceCategory = watch("primaryServiceCategory")
 
+  // Add service capability to local state
+  const handleAddCapability = (serviceTypeId) => {
+    if (!serviceTypeId) return
+    
+    // Find service type details
+    const serviceType = serviceTypes?.data?.find(st => st._id === serviceTypeId)
+    if (!serviceType) return
+    
+    // Create a temporary ID for the capability in our local state
+    const tempId = `temp_${Date.now()}_${serviceTypeId}`
+    
+    // Add to local state
+    setServiceCapabilities([
+      ...serviceCapabilities,
+      {
+        _id: tempId,
+        serviceType: serviceType,
+        skillLevel: 1,
+        certified: false
+      }
+    ])
+  }
+
+  // Remove service capability from local state
+  const handleDeleteCapability = (capabilityId) => {
+    setServiceCapabilities(
+      serviceCapabilities.filter(cap => cap._id !== capabilityId)
+    )
+  }
+
+  // Get available service types (not already added)
+  const getAvailableServiceTypes = () => {
+    const currentServiceTypeIds = serviceCapabilities.map(
+      cap => cap.serviceType?._id || cap.serviceType
+    )
+    
+    return (serviceTypes?.data || []).filter(
+      st => !currentServiceTypeIds.includes(st._id) && !currentServiceTypeIds.includes(st._id?.toString())
+    )
+  }
+
   const mutation = useMutation({
     mutationFn: (data) => {
       // Use apiClient.post instead of fetcher
       return apiClient.post("users", data)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["staff"])
-      toast({
-        title: "Success",
-        description: "Staff member added successfully",
-      })
+    onSuccess: (response) => {
+      // If there are service capabilities to add and we have a user ID from the response
+      const userId = response?.data?._id
+      
+      if (userId && serviceCapabilities.length > 0) {
+        // Add service capabilities one by one
+        Promise.all(
+          serviceCapabilities.map(capability => 
+            apiClient.post(`users/${userId}/service-capabilities`, {
+              serviceType: capability.serviceType._id,
+              skillLevel: capability.skillLevel,
+              certified: capability.certified
+            })
+          )
+        ).then(() => {
+          queryClient.invalidateQueries(["staff"])
+          toast({
+            title: "Success",
+            description: "Staff member and capabilities added successfully",
+          })
+        }).catch(error => {
+          console.error("Error adding service capabilities:", error)
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Staff member added but some capabilities failed to add",
+          })
+        })
+      } else {
+        queryClient.invalidateQueries(["staff"])
+        toast({
+          title: "Success",
+          description: "Staff member added successfully",
+        })
+      }
+      
       setOpen(false)
       reset()
+      setServiceCapabilities([])
     },
     onError: (error) => {
       console.error("Error adding staff:", error)
@@ -84,7 +173,7 @@ export function AddStaffDialog({ children }) {
     // Add additional fields required by the backend
     const enhancedData = {
       ...data,
-      status: "active", // Set default status
+      status: data.status || "active", // Set default status
     }
     
     console.log("Submitting form data:", enhancedData) // Debug log
@@ -94,7 +183,7 @@ export function AddStaffDialog({ children }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Staff Member</DialogTitle>
           <DialogDescription>
@@ -194,13 +283,19 @@ export function AddStaffDialog({ children }) {
                 <SelectValue placeholder="Select primary service category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="routine_maintenance">Routine Maintenance</SelectItem>
-                <SelectItem value="repair">Repair</SelectItem>
-                <SelectItem value="inspection">Inspection</SelectItem>
-                <SelectItem value="body_work">Body Work</SelectItem>
-                <SelectItem value="washing">Washing</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-                <SelectItem value="administration">Administration</SelectItem>
+              {designationLoading ? (
+                  <SelectItem value="loading" disabled>Loading designations...</SelectItem>
+                ) : designation?.data?.length > 0 ? (
+                  designation.data.map((des) => (
+                    <SelectItem key={des._id} value={des._id}>
+                      {des.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-designations" disabled>
+                    No designations available
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -245,6 +340,81 @@ export function AddStaffDialog({ children }) {
               placeholder="(123) 456-7890"
             />
           </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="status"
+              checked={watch("status") === "active"}
+              onCheckedChange={(checked) => setValue("status", checked ? "active" : "inactive")}
+            />
+            <Label htmlFor="status">Active</Label>
+          </div>
+          
+          {/* Service Capabilities Section */}
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-lg font-medium">Service Capabilities</Label>
+              {!serviceTypesLoading && getAvailableServiceTypes().length > 0 && (
+                <Select
+                  onValueChange={handleAddCapability}
+                >
+                  <SelectTrigger className="w-auto">
+                    <div className="flex items-center">
+                      <Plus className="h-4 w-4 mr-1" />
+                      <span>Add Capability</span>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableServiceTypes().map((serviceType) => (
+                      <SelectItem key={serviceType._id} value={serviceType._id}>
+                        {serviceType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            
+            <div className="space-y-2">
+              {serviceTypesLoading ? (
+                <div className="flex items-center justify-center p-4">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                </div>
+              ) : serviceCapabilities.length === 0 ? (
+                <p className="text-sm text-gray-500">No service capabilities assigned</p>
+              ) : (
+                <div className="border rounded-md divide-y">
+                  {serviceCapabilities.map((capability) => {
+                    const serviceTypeName = capability.serviceType?.name;
+                    
+                    return (
+                      <div 
+                        key={capability._id} 
+                        className="p-3 flex items-center justify-between"
+                      >
+                        <div>
+                          <p className="font-medium">{serviceTypeName}</p>
+                          <div className="flex gap-4 text-sm text-gray-600">
+                            <span>Skill Level: {capability.skillLevel}/5</span>
+                            <span>Certified: {capability.certified ? "Yes" : "No"}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteCapability(capability._id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+          
           <DialogFooter>
             <Button
               type="button"

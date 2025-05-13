@@ -49,8 +49,8 @@ export function BranchDialog({ branchId, children }) {
   })
 
   // Extract managers array correctly - FIXED: Now checking for userdata which is what the API returns
-  console.log("managers data:", managerData)
   const managers = managerData?.userdata || managerData?.data || []
+  console.log("managers data:", managerData)
   
   // Debug output to help diagnose the issue
   useEffect(() => {
@@ -65,6 +65,7 @@ export function BranchDialog({ branchId, children }) {
     handleSubmit,
     setValue,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -105,8 +106,13 @@ export function BranchDialog({ branchId, children }) {
 
   // Create or update branch
   const mutation = useMutation({
-    mutationFn: (data) =>
-      branchId
+    mutationFn: (data) => {
+      // Handle empty manager field
+      if (data.manager === "") {
+        data.manager = null;
+      }
+      
+      return branchId
         ? fetcher(`branches/${branchId}`, {
           method: "PUT",
           body: JSON.stringify(data),
@@ -114,7 +120,8 @@ export function BranchDialog({ branchId, children }) {
         : fetcher("branches", {
           method: "POST",
           body: JSON.stringify(data),
-        }),
+        });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["branches"])
       if (branchId) {
@@ -305,6 +312,7 @@ export function BranchDialog({ branchId, children }) {
                     <SelectValue placeholder="Select manager" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem  >No manager (unassigned)</SelectItem>
                     {managers.map((manager) => (
                       <SelectItem key={manager._id} value={manager._id}>
                         {manager.firstName} {manager.lastName}

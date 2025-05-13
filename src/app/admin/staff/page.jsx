@@ -16,6 +16,7 @@ import { Loader2, UserPlus } from "lucide-react"
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog"
 import { StaffDetailsDialog } from "@/components/staff/staff-details-dialog"
 import { fetcher } from "@/lib/utils"
+import { AddDesignation } from "@/components/staff/addDesignation"
 
 export default function StaffPage() {
   const [search, setSearch] = useState("")
@@ -28,11 +29,17 @@ export default function StaffPage() {
       fetcher(`users?search=${search}&page=${page}&limit=${pageSize}`),
   })
 
+  // Check if we have pagination data from API
+  const hasNextPage = data?.pagination?.next !== undefined
+  const hasPrevPage = data?.pagination?.prev !== undefined
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Staff Management</h2>
         <div className="flex items-center space-x-2">
+          <AddDesignation/>
+          
           <AddStaffDialog>
             <Button>
               <UserPlus className="mr-2 h-4 w-4" />
@@ -71,7 +78,7 @@ export default function StaffPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : data.data && data.data.length > 0 ? (
+            ) : data?.data && data?.data.length > 0 ? (
               data.data.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell>
@@ -110,23 +117,29 @@ export default function StaffPage() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1 || isLoading}
-        >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!data?.hasMore || isLoading}
-        >
-          Next
-        </Button>
+      <div className="flex items-center justify-between py-4">
+        <div className="text-sm text-gray-500">
+          {data?.count ? `Showing ${data.count} staff members` : ""}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!hasPrevPage || isLoading}
+          >
+            Previous
+          </Button>
+          <span className="text-sm">Page {page}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNextPage || isLoading}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   )

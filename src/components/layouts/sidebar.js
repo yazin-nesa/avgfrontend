@@ -28,14 +28,20 @@ const roleBasedNavItems = {
       icon: 'vehicle',
     },
     {
-      title: 'Incentives',
-      href: '/admin/incentives',
-      icon: 'creditCard', // changed from chart to something finance-related
+      title: 'Service types',
+      href: '/admin/servicetype',
+      icon: 'settings', // makes sense for types/configurations
     },
+
     {
       title: 'Complaints',
       href: '/admin/complaints',
       icon: 'complaint',
+    },
+    {
+      title: 'Incentives',
+      href: '/admin/incentives',
+      icon: 'creditCard', // changed from chart to something finance-related
     },
     {
       title: 'Staff Performance',
@@ -47,13 +53,9 @@ const roleBasedNavItems = {
       href: '/admin/reports',
       icon: 'fileText', // represents reports/documents
     },
-    {
-      title: 'Service types',
-      href: '/admin/servicetype',
-      icon: 'settings', // makes sense for types/configurations
-    },
+
   ],
-  
+
   hr: [
     {
       title: 'Dashboard',
