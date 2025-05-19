@@ -22,10 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Slider
+} from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Trash2, Plus } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { apiClient } from "@/lib/api" // Import the apiClient instead of fetcher
+import { apiClient } from "@/lib/api"
 
 export function AddStaffDialog({ children }) {
   const [open, setOpen] = useState(false)
@@ -40,9 +43,17 @@ export function AddStaffDialog({ children }) {
     enabled: open,
   })
   
-  const { data: designation, isLoading: designationLoading } = useQuery({
-    queryKey: ["designation"],
+  // Fetch designations
+  const { data: designations, isLoading: designationsLoading } = useQuery({
+    queryKey: ["designations"],
     queryFn: () => apiClient.get("designation"),
+    enabled: open,
+  })
+  
+  // Fetch staff categories
+  const { data: staffCategories, isLoading: staffCategoriesLoading } = useQuery({
+    queryKey: ["staffCategories"],
+    queryFn: () => apiClient.get("staffCategories"),
     enabled: open,
   })
   
@@ -64,14 +75,22 @@ export function AddStaffDialog({ children }) {
     defaultValues: {
       role: "staff",
       status: "active",
-      primaryServiceCategory: "administration",
+      salary: {
+        base: 0,
+        currency: "USD",
+        paymentFrequency: "monthly"
+      }
     },
   })
 
   // Watch form values
   const selectedRole = watch("role")
   const selectedBranch = watch("branch")
-  const selectedPrimaryServiceCategory = watch("primaryServiceCategory")
+  const selectedDesignation = watch("designation")
+  const selectedStaffCategory = watch("primaryServiceCategory")
+  const baseSalary = watch("salary.base")
+
+  // Removed handleStaffCategoryChange as we're now doing this inline in the Select component
 
   // Add service capability to local state
   const handleAddCapability = (serviceTypeId) => {
@@ -103,6 +122,28 @@ export function AddStaffDialog({ children }) {
     )
   }
 
+  // Update skill level for a service capability
+  const handleSkillLevelChange = (capabilityId, newSkillLevel) => {
+    setServiceCapabilities(
+      serviceCapabilities.map(cap => 
+        cap._id === capabilityId 
+          ? { ...cap, skillLevel: newSkillLevel } 
+          : cap
+      )
+    )
+  }
+
+  // Toggle certification for a service capability
+  const handleCertificationToggle = (capabilityId) => {
+    setServiceCapabilities(
+      serviceCapabilities.map(cap => 
+        cap._id === capabilityId 
+          ? { ...cap, certified: !cap.certified } 
+          : cap
+      )
+    )
+  }
+
   // Get available service types (not already added)
   const getAvailableServiceTypes = () => {
     const currentServiceTypeIds = serviceCapabilities.map(
@@ -116,7 +157,8 @@ export function AddStaffDialog({ children }) {
 
   const mutation = useMutation({
     mutationFn: (data) => {
-      // Use apiClient.post instead of fetcher
+      // Log the data right before sending to API to verify all fields are correctly set
+      console.log("Sending to API:", data);
       return apiClient.post("users", data)
     },
     onSuccess: (response) => {
@@ -170,10 +212,18 @@ export function AddStaffDialog({ children }) {
   })
 
   const onSubmit = (data) => {
-    // Add additional fields required by the backend
+    // Ensure salary structure is properly formatted
     const enhancedData = {
       ...data,
-      status: data.status || "active", // Set default status
+      status: data.status || "active",
+      // Make sure primaryServiceCategory is properly set
+      primaryServiceCategory: data.primaryServiceCategory,
+      salary: {
+        base: parseFloat(data.salary?.base) || 0,
+        currency: data.salary?.currency || "USD",
+        paymentFrequency: data.salary?.paymentFrequency || "monthly",
+        effectiveDate: new Date()
+      }
     }
     
     console.log("Submitting form data:", enhancedData) // Debug log
@@ -273,22 +323,23 @@ export function AddStaffDialog({ children }) {
             </Select>
           </div>
           
+          {/* Designation field (previously called primaryServiceCategory) */}
           <div className="space-y-2">
-            <Label htmlFor="primaryServiceCategory">Primary Service Category</Label>
+            <Label htmlFor="designation">Designation</Label>
             <Select
-              onValueChange={(value) => setValue("primaryServiceCategory", value)}
-              defaultValue="administration"
+              onValueChange={(value) => setValue("designation", value)}
+              value={selectedDesignation}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select primary service category" />
+                <SelectValue placeholder="Select designation" />
               </SelectTrigger>
               <SelectContent>
-              {designationLoading ? (
+                {designationsLoading ? (
                   <SelectItem value="loading" disabled>Loading designations...</SelectItem>
-                ) : designation?.data?.length > 0 ? (
-                  designation.data.map((des) => (
-                    <SelectItem key={des._id} value={des._id}>
-                      {des.name}
+                ) : designations?.data?.length > 0 ? (
+                  designations.data.map((designation) => (
+                    <SelectItem key={designation._id} value={designation._id}>
+                      {designation.name}
                     </SelectItem>
                   ))
                 ) : (
@@ -298,6 +349,52 @@ export function AddStaffDialog({ children }) {
                 )}
               </SelectContent>
             </Select>
+            {!selectedDesignation && (
+              <p className="text-sm text-amber-500">
+                Please select a designation
+              </p>
+            )}
+          </div>
+             
+          {/* Primary Service Category (StaffCategory) */}
+          <div className="space-y-2">
+            <Label htmlFor="primaryServiceCategory">Staff Category</Label>
+            <Select
+              onValueChange={(categoryId) => {
+                setValue("primaryServiceCategory", categoryId);
+                
+                // Find category to set base salary
+                const category = staffCategories?.data?.find(cat => cat._id === categoryId);
+                if (category && category.baseSalary) {
+                  setValue("salary.base", category.baseSalary);
+                }
+              }}
+              value={selectedStaffCategory}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select staff category" />
+              </SelectTrigger>
+              <SelectContent>
+                {staffCategoriesLoading ? (
+                  <SelectItem value="loading" disabled>Loading staff categories...</SelectItem>
+                ) : staffCategories?.data?.length > 0 ? (
+                  staffCategories.data.map((category) => (
+                    <SelectItem key={category._id} value={category._id}>
+                      {category.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-categories" disabled>
+                    No staff categories available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            {!selectedStaffCategory && (
+              <p className="text-sm text-amber-500">
+                Please select a staff category
+              </p>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -331,6 +428,70 @@ export function AddStaffDialog({ children }) {
               </p>
             )}
           </div>
+          
+          {/* Salary Information Section */}
+          <div className="border p-4 rounded-md space-y-4">
+            <h3 className="font-medium text-base">Salary Information</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="salary.base">Base Salary</Label>
+              <Input
+                id="salary.base"
+                type="number"
+                min="0"
+                step="0.01"
+                {...register("salary.base", {
+                  required: "Base salary is required",
+                  min: { value: 0, message: "Base salary cannot be negative" },
+                })}
+              />
+              {errors.salary?.base && (
+                <p className="text-sm text-red-500">
+                  {errors.salary.base.message}
+                </p>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="salary.currency">Currency</Label>
+                <Select
+                  onValueChange={(value) => setValue("salary.currency", value)}
+                  defaultValue="USD"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="CAD">CAD</SelectItem>
+                    <SelectItem value="AUD">AUD</SelectItem>
+                    <SelectItem value="INR">INR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="salary.paymentFrequency">Payment Frequency</Label>
+                <Select
+                  onValueChange={(value) => setValue("salary.paymentFrequency", value)}
+                  defaultValue="monthly"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="phone">Phone (Optional)</Label>
             <Input
@@ -390,23 +551,49 @@ export function AddStaffDialog({ children }) {
                     return (
                       <div 
                         key={capability._id} 
-                        className="p-3 flex items-center justify-between"
+                        className="p-3 space-y-3"
                       >
-                        <div>
-                          <p className="font-medium">{serviceTypeName}</p>
-                          <div className="flex gap-4 text-sm text-gray-600">
-                            <span>Skill Level: {capability.skillLevel}/5</span>
-                            <span>Certified: {capability.certified ? "Yes" : "No"}</span>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">{serviceTypeName}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteCapability(capability._id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <Label>Skill Level: {capability.skillLevel}/5</Label>
+                              <span className="text-sm text-gray-500">
+                                {capability.skillLevel === 1 ? "Beginner" : 
+                                 capability.skillLevel === 2 ? "Basic" :
+                                 capability.skillLevel === 3 ? "Intermediate" :
+                                 capability.skillLevel === 4 ? "Advanced" : "Expert"}
+                              </span>
+                            </div>
+                            <Slider
+                              defaultValue={[capability.skillLevel]}
+                              min={1}
+                              max={5}
+                              step={1}
+                              onValueChange={(values) => handleSkillLevelChange(capability._id, values[0])}
+                            />
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`certified-${capability._id}`}
+                              checked={capability.certified}
+                              onCheckedChange={() => handleCertificationToggle(capability._id)}
+                            />
+                            <Label htmlFor={`certified-${capability._id}`}>Certified</Label>
                           </div>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteCapability(capability._id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
                       </div>
                     )
                   })}
@@ -428,7 +615,9 @@ export function AddStaffDialog({ children }) {
               disabled={
                 mutation.isLoading || 
                 isSubmitting || 
-                !selectedBranch
+                !selectedBranch ||
+                !selectedDesignation ||
+                !selectedStaffCategory
               }
             >
               {(mutation.isLoading || isSubmitting) && (
